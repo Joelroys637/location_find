@@ -124,22 +124,21 @@ selected_destination = st.sidebar.selectbox(
     index=0,
     format_func=lambda x: "Select destination" if x == "" else x
 )
-#------------------destination speech 
 
+#-----------destination
+if st.sidebar.button("🔊 Speak Destination"):
+    text = f"Welcome to SJC! Your destination is {selected_destination}. The path is shown on the map. Thank you for visiting SJC."
+    rate = 0.9
+    pitch = 1.0
 
-text ="Welcome to sjc your Destination "+selected_destination+"Path show in the map Thank for comming sjc"
-
-rate = 0.70
-pitch = 1.0
-
-
-st.components.v1.html(f"""
-    <script>
-    const utterance = new SpeechSynthesisUtterance("{text}");
-    utterance.rate = {rate};
-    utterance.pitch = {pitch};
-    speechSynthesis.speak(utterance);
-    </script>
+    st.components.v1.html(f"""
+        <script>
+        var msg = new SpeechSynthesisUtterance("{text}");
+        msg.rate = {rate};
+        msg.pitch = {pitch};
+        window.speechSynthesis.cancel();
+        window.speechSynthesis.speak(msg);
+        </script>
     """, height=0)
 
 # ------------------ Main Path Logic ------------------
