@@ -7,6 +7,16 @@ from geopy.distance import geodesic
 # ------------------ Streamlit Page Setup ------------------
 st.set_page_config(layout="wide", page_title="Smart Campus Logical Path Navigator")
 st.markdown(
+        """
+        <style>
+        div[data-testid="stHorizontalBlock"] {
+            display: none !important;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+st.markdown(
     """<center><h1 style="color:red;">Smart 3D Campus Logical Path Finder</h1></center>""",
     unsafe_allow_html=True
 )
