@@ -126,8 +126,8 @@ selected_destination = st.sidebar.selectbox(
 )
 
 #-----------destination
-text = f"Welcome to SJC! Your destination is {selected_destination}. The path is shown on the map. Thank you for visiting SJC."
-rate = 0.9
+text = f"Welcome to SJC! Your destination is {selected_destination} Click Show Logical path Button. The path is shown on the map. Thank you for visiting SJC."
+rate = 0.7
 pitch = 1.0
 
 st.components.v1.html(f"""
