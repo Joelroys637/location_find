@@ -8,7 +8,7 @@ from geopy.distance import geodesic
 st.set_page_config(layout="wide", page_title="Smart Campus Logical Path Navigator")
 
 st.markdown(
-    """<center><h1 style="color:red;">Smart 3D Campus Logical Path Finder</h1></center>""",
+    """<center><h1 style="color:red;">SJC Campus navigate system</h1></center>""",
     unsafe_allow_html=True
 )
 
