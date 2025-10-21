@@ -126,18 +126,19 @@ selected_destination = st.sidebar.selectbox(
 )
 
 #-----------destination
-st.markdown(f"""
+text = f"Welcome to SJC! Your destination is {selected_destination}. The path is shown on the map. Thank you for visiting SJC."
+rate = 0.9
+pitch = 1.0
+
+st.components.v1.html(f"""
     <script>
-    document.addEventListener("DOMContentLoaded", () => {{
-        var text = "Welcome to SJC! Your destination is {selected_destination}. The path is shown on the map. Thank you for visiting SJC.";
-        var msg = new SpeechSynthesisUtterance(text);
-        msg.rate = 0.9;
-        msg.pitch = 1.0;
-        window.speechSynthesis.cancel();
-        window.speechSynthesis.speak(msg);
-    }});
+    var msg = new SpeechSynthesisUtterance("{text}");
+    msg.rate = {rate};
+    msg.pitch = {pitch};
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.speak(msg);
     </script>
-""", unsafe_allow_html=True)
+""", height=0)
 
 # ------------------ Main Path Logic ------------------
 if not st.session_state.path_drawn:
