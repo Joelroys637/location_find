@@ -6,18 +6,7 @@ from geopy.distance import geodesic
 
 # ------------------ Streamlit Page Setup ------------------
 st.set_page_config(layout="wide", page_title="Smart Campus Logical Path Navigator")
-hide_streamlit_style = """
-            <style>
-                /* Hide the Streamlit header and menu */
-                header {visibility: hidden;}
-                /* Optionally, hide the footer */
-                .streamlit-footer {display: none;}
-                /* Hide your specific div class, replace class name with the one you identified */
-                .st-emotion-cache-uf99v8 {display: none;}
-            </style>
-            """
 
-st.markdown(hide_streamlit_style, unsafe_allow_html=True)
 st.markdown(
     """<center><h1 style="color:red;">Smart 3D Campus Logical Path Finder</h1></center>""",
     unsafe_allow_html=True
