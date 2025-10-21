@@ -124,6 +124,23 @@ selected_destination = st.sidebar.selectbox(
     index=0,
     format_func=lambda x: "Select destination" if x == "" else x
 )
+#------------------destination speech 
+
+
+text ="Welcome to sjc your Destination "+selected_destination+"Path show in the map Thank for comming sjc"
+
+rate = 0.70
+pitch = 1.0
+
+
+st.components.v1.html(f"""
+    <script>
+    const utterance = new SpeechSynthesisUtterance("{text}");
+    utterance.rate = {rate};
+    utterance.pitch = {pitch};
+    speechSynthesis.speak(utterance);
+    </script>
+    """, height=0)
 
 # ------------------ Main Path Logic ------------------
 if not st.session_state.path_drawn:
