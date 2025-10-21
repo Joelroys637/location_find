@@ -126,19 +126,7 @@ selected_destination = st.sidebar.selectbox(
 )
 
 #-----------destination
-text = f"Welcome to SJC! Your destination is {selected_destination}. The path is shown on the map. Thank you for visiting SJC."
-rate = 0.9
-pitch = 1.0
 
-st.components.v1.html(f"""
-    <script>
-    var msg = new SpeechSynthesisUtterance("{text}");
-    msg.rate = {rate};
-    msg.pitch = {pitch};
-    window.speechSynthesis.cancel();
-    window.speechSynthesis.speak(msg);
-    </script>
-""", height=0)
 
 # ------------------ Main Path Logic ------------------
 if not st.session_state.path_drawn:
@@ -152,6 +140,19 @@ if not st.session_state.path_drawn:
         st.sidebar.write(f"✅ Start Point: {st.session_state.start_point}")
 
     if st.sidebar.button("Show Logical Path") and selected_destination and st.session_state.start_point:
+        text = f"Welcome to SJC! Your destination is {selected_destination}. The path is shown on the map. Thank you for visiting SJC."
+        rate = 0.9
+        pitch = 1.0
+
+        st.components.v1.html(f"""
+            <script>
+            var msg = new SpeechSynthesisUtterance("{text}");
+            msg.rate = {rate};
+            msg.pitch = {pitch};
+            window.speechSynthesis.cancel();
+            window.speechSynthesis.speak(msg);
+            </script>
+        """, height=0)
         dest_coords = locations[selected_destination]
 
         start_j = nearest_junction(st.session_state.start_point)
