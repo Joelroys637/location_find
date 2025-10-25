@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Smart 3D Campus Logical Path Finder</title>
+
+<!-- Leaflet CSS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    background-color: #121212;
+    color: white;
+  }
+  h1 {
+    color: red;
+    text-align: center;
+    margin-top: 10px;
+  }
+  #sidebar {
+    width: 25%;
+    float: left;
+    padding: 15px;
+    background-color: #1e1e1e;
+    height: 100vh;
+    box-sizing: border-box;
+  }
+  #map {
+    width: 75%;
+    height: 100vh;
+    float: right;
+  }
+  input, select, button {
+    width: 100%;
+    padding: 8px;
+    margin: 8px 0;
+    border-radius: 5px;
+    border: none;
+  }
+  button {
+    background-color: red;
+    color: white;
+    cursor: pointer;
+  }
+  button:hover {
+    background-color: darkred;
+  }
+  .suggestions {
+    color: #aaa;
+    font-size: 14px;
+  }
+</style>
+</head>
+<body>
+  <h1>Smart 3D Campus Logical Path Finder</h1>
+  <div id="sidebar">
+    <h3>Controls</h3>
+    <p>Click on the map to select your start location.</p>
+
+    <label>🔍 Type place name:</label>
+    <input type="text" id="searchBox" placeholder="Search place...">
+
+    <div id="suggestions" class="suggestions"></div>
+
+    <label>Select destination:</label>
+    <select id="destinationSelect">
+      <option value="">Select destination</option>
+    </select>
+
+    <button id="showPath">Show Logical Path</button>
+    <button id="reset">Reset</button>
+
+    <p id="status"></p>
+  </div>
+
+  <div id="map"></div>
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    // ------------------ Predefined Locations ------------------
+    const locations = {
+      "CS Department": [10.8291, 78.6916],
+      "Library": [10.8285, 78.6908],
+      "Main Gate": [10.8298, 78.6928],
+      "Play Ground": [10.829873, 78.690455],
+      "IT Department": [10.828345052338351, 78.69291733750346],
+      "Jubile hall": [10.829380, 78.689414],
+    };
+
+    const junctions = {
+      "J1": [10.829923, 78.692432],
+      "J2": [10.830122, 78.691991],
+      "J3": [10.829842, 78.692010],
+      "J4": [10.829463, 78.691986],
+      "J5": [10.829221, 78.691987],
+      "J6": [10.828979, 78.691971],
+      "J7": [10.828760, 78.691952],
+      "J8": [10.828516, 78.691952],
+      "J9": [10.828724, 78.691590],
+      "J10": [10.828764, 78.690925],
+      "J11": [10.829056, 78.691175],
+      "J12": [10.829412, 78.691148],
+      "J13": [10.829760, 78.691145],
+      "J14": [10.830186, 78.691142],
+      "J15": [10.830645, 78.691118],
+      "J16": [10.828786, 78.690773],
+      "J17": [10.828844, 78.690263],
+      "J18": [10.828905, 78.689850],
+      "J19": [10.829037, 78.689630],
+      "J20": [10.829240, 78.689671],
+    };
+
+    const edges = [
+      ["J1", "J2"], ["J2", "J3"], ["J3", "J4"], ["J4", "J5"], ["J5", "J6"], ["J6", "J7"], ["J7", "J8"], ["J8", "J9"],
+      ["J9", "J10"], ["J10", "J16"], ["J10", "J11"], ["J11", "J12"], ["J12", "J13"], ["J13", "J14"], ["J14", "J15"],
+      ["J15", "J16"], ["J16", "J17"], ["J17", "J18"], ["J18", "J19"], ["J19", "J20"]
+    ];
+
+    // ------------------ Helper Functions ------------------
+    function haversineDistance(a, b) {
+      const R = 6371000;
+      const dLat = (b[0] - a[0]) * Math.PI / 180;
+      const dLon = (b[1] - a[1]) * Math.PI / 180;
+      const lat1 = a[0] * Math.PI / 180;
+      const lat2 = b[0] * Math.PI / 180;
+      const x = dLon * Math.cos((lat1 + lat2) / 2);
+      const y = dLat;
+      return Math.sqrt(x * x + y * y) * R;
+    }
+
+    function nearestJunction(point) {
+      let nearest = null;
+      let minDist = Infinity;
+      for (const [j, coord] of Object.entries(junctions)) {
+        const d = haversineDistance(point, coord);
+        if (d < minDist) {
+          minDist = d;
+          nearest = j;
+        }
+      }
+      return nearest;
+    }
+
+    // ------------------ A* Shortest Path ------------------
+    function shortestPath(start, end) {
+      const adj = {};
+      edges.forEach(([u, v]) => {
+        if (!adj[u]) adj[u] = [];
+        if (!adj[v]) adj[v] = [];
+        adj[u].push(v);
+        adj[v].push(u);
+      });
+
+      const openSet = [start];
+      const cameFrom = {};
+      const gScore = {};
+      const fScore = {};
+
+      for (const n in junctions) {
+        gScore[n] = Infinity;
+        fScore[n] = Infinity;
+      }
+      gScore[start] = 0;
+      fScore[start] = haversineDistance(junctions[start], junctions[end]);
+
+      while (openSet.length > 0) {
+        let current = openSet.reduce((a, b) => fScore[a] < fScore[b] ? a : b);
+        if (current === end) {
+          const path = [];
+          while (current) {
+            path.unshift(current);
+            current = cameFrom[current];
+          }
+          return path;
+        }
+
+        openSet.splice(openSet.indexOf(current), 1);
+        for (const neighbor of adj[current]) {
+          const tentative = gScore[current] + haversineDistance(junctions[current], junctions[neighbor]);
+          if (tentative < gScore[neighbor]) {
+            cameFrom[neighbor] = current;
+            gScore[neighbor] = tentative;
+            fScore[neighbor] = gScore[neighbor] + haversineDistance(junctions[neighbor], junctions[end]);
+            if (!openSet.includes(neighbor)) openSet.push(neighbor);
+          }
+        }
+      }
+      return [];
+    }
+
+    // ------------------ Initialize Map ------------------
+    const map = L.map('map').setView([10.8293, 78.6919], 18);
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+      maxZoom: 20,
+    }).addTo(map);
+
+    // Add location markers
+    for (const [name, coords] of Object.entries(locations)) {
+      L.marker(coords, { title: name }).addTo(map).bindPopup(name);
+    }
+
+    // Add junctions
+    for (const coord of Object.values(junctions)) {
+      L.circleMarker(coord, { radius: 4, color: 'yellow' }).addTo(map);
+    }
+
+    let startPoint = null;
+    let startMarker = null;
+    let pathLine = null;
+
+    map.on('click', e => {
+      if (startMarker) map.removeLayer(startMarker);
+      startPoint = [e.latlng.lat, e.latlng.lng];
+      startMarker = L.marker(startPoint, { icon: L.icon({ iconUrl: 'https://cdn-icons-png.flaticon.com/512/684/684908.png', iconSize: [25, 25] }) })
+        .addTo(map)
+        .bindPopup('Start Point')
+        .openPopup();
+      document.getElementById("status").innerText = `✅ Start point selected: ${startPoint}`;
+    });
+
+    // ------------------ Populate Destination Dropdown ------------------
+    const destSelect = document.getElementById("destinationSelect");
+    for (const key in locations) {
+      const opt = document.createElement("option");
+      opt.value = key;
+      opt.textContent = key;
+      destSelect.appendChild(opt);
+    }
+
+    // ------------------ Search Suggestion ------------------
+    const searchBox = document.getElementById("searchBox");
+    const suggestionBox = document.getElementById("suggestions");
+    searchBox.addEventListener("input", () => {
+      const query = searchBox.value.toLowerCase();
+      suggestionBox.innerHTML = "";
+      if (!query) return;
+      const results = Object.keys(locations).filter(k => k.toLowerCase().includes(query));
+      results.forEach(r => {
+        const div = document.createElement("div");
+        div.textContent = "• " + r;
+        suggestionBox.appendChild(div);
+      });
+    });
+
+    // ------------------ Show Path ------------------
+    document.getElementById("showPath").onclick = () => {
+      const destName = destSelect.value;
+      if (!destName || !startPoint) {
+        alert("Please select a start point and destination!");
+        return;
+      }
+
+      const destCoords = locations[destName];
+      const startJ = nearestJunction(startPoint);
+      const destJ = nearestJunction(destCoords);
+      const path = shortestPath(startJ, destJ);
+
+      if (pathLine) map.removeLayer(pathLine);
+
+      const coordsList = [startPoint, ...path.map(p => junctions[p]), destCoords];
+      pathLine = L.polyline(coordsList, { color: 'red', weight: 5 }).addTo(map);
+
+      // Show distance
+      let totalDist = 0;
+      for (let i = 0; i < coordsList.length - 1; i++) {
+        totalDist += haversineDistance(coordsList[i], coordsList[i + 1]);
+      }
+      document.getElementById("status").innerText = `✅ Path drawn logically (${totalDist.toFixed(2)} meters)`;
+
+      // Speak the destination
+      const utterance = new SpeechSynthesisUtterance(`Welcome to SJC. Your destination ${destName} path is shown on the map. Thank you for coming to SJC.`);
+      utterance.rate = 0.8;
+      utterance.pitch = 1.0;
+      speechSynthesis.speak(utterance);
+    };
+
+    // ------------------ Reset ------------------
+    document.getElementById("reset").onclick = () => {
+      map.eachLayer(layer => {
+        if (layer instanceof L.Polyline || layer instanceof L.Marker) {
+          map.removeLayer(layer);
+        }
+      });
+      for (const [name, coords] of Object.entries(locations)) {
+        L.marker(coords, { title: name }).addTo(map).bindPopup(name);
+      }
+      for (const coord of Object.values(junctions)) {
+        L.circleMarker(coord, { radius: 4, color: 'yellow' }).addTo(map);
+      }
+      pathLine = null;
+      startMarker = null;
+      startPoint = null;
+      document.getElementById("status").innerText = "";
+    };
+  </script>
+</body>
+</html>
